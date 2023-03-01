@@ -22,6 +22,8 @@ where:
 
 <code> -l LOG_FILE </code> (optional) is the path to the log file. If not provided, logs will be printed to the console.
 
+To stop the program, press Ctrl + C from keyboard while terminal is selected.
+
 **Features**
 
 Folder synchronization between two directories.
