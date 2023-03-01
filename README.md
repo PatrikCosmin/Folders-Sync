@@ -38,7 +38,7 @@ Content verification using hash comparison method to ensure file integrity.
 
 **Implementation**
 
-The program works by recursively scanning the source and destination folders for files and subdirectories. If a file exists in the source folder but not in the destination folder, it is copied over. If a file exists in both folders, its contents are compared using SHA-256 hash method to ensure that they are the same. If the contents are different, the file in the destination folder is replaced with the file from the source folder. If a file exists in the destination folder but not in the source folder, it is deleted. If a subdirectory exists in the source folder but not in the destination folder, it is created. If a subdirectory exists in both folders, the same synchronization process is applied recursively to the subdirectories.
+The program works by recursively scanning the source and destination folders for files and subdirectories. If a file exists in the source folder but not in the destination folder, it is copied over. If a file exists in both folders, its contents are compared using MD5 hash method to ensure that they are the same. If the contents are different, the file in the destination folder is replaced with the file from the source folder. If a file exists in the destination folder but not in the source folder, it is deleted. If a subdirectory exists in the source folder but not in the destination folder, it is created. If a subdirectory exists in both folders, the same synchronization process is applied recursively to the subdirectories.
 
 **Example:**
 
