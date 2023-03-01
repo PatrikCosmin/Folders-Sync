@@ -82,7 +82,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-# run code in terminal with: python sync_folders.py /path/to/source/folder /path/to/destination/folder -i time interval in seconds -l /path/to/log/file.log
