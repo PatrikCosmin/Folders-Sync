@@ -4,8 +4,10 @@ This is a Python program that synchronizes the contents of two folders, keeping 
 
 **Requirements**
 
-Python 3.6 or later
-Usage
+Python 3.6 or later.
+
+**Instructions**
+
 To use the program, run it from the command line using the following syntax:
 
 <code> python sync_folders.py source_folder destination_folder [-i INTERVAL] [-l LOG_FILE] </code>
