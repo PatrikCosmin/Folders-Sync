@@ -45,3 +45,5 @@ The program works by recursively scanning the source and destination folders for
 To synchronize the contents of C:\FolderA and D:\FolderB with a synchronization interval of 60 seconds and log to a file named sync.log:
 
 <code> python sync_folders.py C:\FolderA D:\FolderB -i 60 -l sync.log </code>
+
+Note: Linux type paths are supported since module 'os' is used.
