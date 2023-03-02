@@ -54,6 +54,8 @@ The program works by recursively scanning the source and destination folders for
 
 This program should be able to work with any type of file, as it reads the files in binary mode and synchronizes them based on their binary content using the MD5 hash algorithm. Therefore, the program is file type-agnostic and should work with any file format.
 
+For read-only files and folders **PowerShell** is called using a subprocess for the delete action in Windows based systems.
+
 **Example:**
 
 To synchronize the contents of C:\FolderA and D:\FolderB with a synchronization interval of 60 seconds and log to a file named sync.log:
