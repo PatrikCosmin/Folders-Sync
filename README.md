@@ -62,4 +62,4 @@ To synchronize the contents of C:\FolderA and D:\FolderB with a synchronization 
 
 <code> python sync_folders.py C:\FolderA D:\FolderB -i 60 -l sync.log </code>
 
-Note: Linux type paths are supported since module 'os' is used.
+Note: Linux type paths are supported since module 'os' is used. Only requirement is to use path separator for Linux, which is a forward slash (/) instead of a backslash (\) used in Windows.
