@@ -11,7 +11,18 @@ def get_file_hash(path):
         data = f.read()
         return hashlib.md5(data).hexdigest()
 
+
 def synchronize_folders(source_folder, destination_folder, logger):
+    logger.debug(f"Synchronizing folders {source_folder} and {destination_folder}")
+
+
+    if not os.path.isdir(source_folder):
+        logger.error(f"Source folder {source_folder} does not exist")
+        return
+    if not os.path.isdir(destination_folder):
+        logger.error(f"Destination folder {destination_folder} does not exist")
+        return
+
     for entry in os.scandir(destination_folder):
         if entry.is_file():
             destination_path = entry.path
@@ -34,11 +45,13 @@ def synchronize_folders(source_folder, destination_folder, logger):
             source_path = entry.path
             destination_path = os.path.join(destination_folder, entry.name)
             if os.path.isfile(destination_path):
-                source_hash = get_file_hash(source_path)
-                dest_hash = get_file_hash(destination_path)
-                if source_hash != dest_hash:
+                source_mtime = os.path.getmtime(source_path)
+                dest_mtime = os.path.getmtime(destination_path)
+                if source_mtime > dest_mtime:
                     logger.info(f"Copying {source_path} to {destination_path}")
                     shutil.copy2(source_path, destination_path)
+                else:
+                    logger.info(f"{destination_path} is up to date")
             else:
                 logger.info(f"Copying {source_path} to {destination_path}")
                 shutil.copy2(source_path, destination_path)
