@@ -1,4 +1,4 @@
-**delete_readonly_file(path):** This function takes a path argument and tries to delete the file at that path. If the file is read-only, it calls a subprocess to use PowerShell to forcibly remove the file. Otherwise, it uses the os.remove() function to delete the file.
+**delete_readonly_file(path):** This function takes a path argument and tries to delete the file at that path. If the file is read-only, it calls a subprocess to use PowerShell to forcibly remove the file. Otherwise, it uses the os.remove() function to delete the file. It will also handle cases where program is runned on Linux operating system and switch to elevated privileges.
 
 **get_file_hash(path):** This function takes a file path argument and returns the MD5 hash of the file contents. It reads the file in chunks of a certain size (chosen based on the file size) and updates an MD5 hash object with each chunk. Finally, it returns the hexdigest of the hash object.
 
