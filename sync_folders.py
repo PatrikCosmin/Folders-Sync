@@ -61,7 +61,7 @@ def synchronize_folders(source_folder, destination_folder, logger):
                         logger.info(f"Copying {source_path} to {destination_path}")
                         shutil.copy2(source_path, destination_path)
                     except IOError as e:
-                        if e.errno == errno.ENOSPC:  # disk full error
+                        if e.errno == errno.ENOSPC:
                             logger.error("Disk full error occurred. Stopping synchronization.")
                             return
                 else:
@@ -87,7 +87,7 @@ def synchronize_folders(source_folder, destination_folder, logger):
                     logger.info(f"Copying {source_path} to {destination_path}")
                     shutil.copy2(source_path, destination_path)
                 except IOError as e:
-                    if e.errno == errno.ENOSPC:  # disk full error
+                    if e.errno == errno.ENOSPC:
                         logger.error("Disk full error occurred. Stopping synchronization.")
                         return
         elif entry.is_dir():
