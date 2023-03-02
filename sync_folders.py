@@ -6,15 +6,29 @@ import shutil
 import signal
 import time
 
+
 def get_file_hash(path):
+    file_size = os.stat(path).st_size
+    if file_size < 1024 * 1024:
+        buffer_size = 4096
+    elif file_size < 1024 * 1024 * 10:
+        buffer_size = 65536
+    elif file_size < 1024 * 1024 * 100:
+        buffer_size = 1024 * 1024
+    else:
+        buffer_size = 1024 * 1024 * 10
+    hasher = hashlib.md5()
     with open(path, "rb") as f:
-        data = f.read()
-        return hashlib.md5(data).hexdigest()
+        while True:
+            data = f.read(buffer_size)
+            if not data:
+                break
+            hasher.update(data)
+    return hasher.hexdigest()
 
 
 def synchronize_folders(source_folder, destination_folder, logger):
     logger.debug(f"Synchronizing folders {source_folder} and {destination_folder}")
-
 
     if not os.path.isdir(source_folder):
         logger.error(f"Source folder {source_folder} does not exist")
@@ -30,6 +44,23 @@ def synchronize_folders(source_folder, destination_folder, logger):
             if not os.path.isfile(source_path):
                 logger.info(f"Deleting {destination_path}")
                 os.remove(destination_path)
+            else:
+                source_stat = os.stat(source_path)
+                dest_stat = os.stat(destination_path)
+                if (
+                    source_stat.st_mode != dest_stat.st_mode
+                    or source_stat.st_uid != dest_stat.st_uid
+                    or source_stat.st_gid != dest_stat.st_gid
+                    or source_stat.st_size != dest_stat.st_size
+                    or source_stat.st_atime != dest_stat.st_atime
+                    or source_stat.st_mtime != dest_stat.st_mtime
+                    or source_stat.st_ctime != dest_stat.st_ctime
+                    or source_stat.st_ino != dest_stat.st_ino
+                ):
+                    logger.info(f"Copying {source_path} to {destination_path}")
+                    shutil.copy2(source_path, destination_path)
+                else:
+                    logger.info(f"{destination_path} is up to date")
         elif entry.is_dir():
             subfolder = entry.name
             source_subfolder = os.path.join(source_folder, subfolder)
@@ -45,13 +76,7 @@ def synchronize_folders(source_folder, destination_folder, logger):
             source_path = entry.path
             destination_path = os.path.join(destination_folder, entry.name)
             if os.path.isfile(destination_path):
-                source_mtime = os.path.getmtime(source_path)
-                dest_mtime = os.path.getmtime(destination_path)
-                if source_mtime > dest_mtime:
-                    logger.info(f"Copying {source_path} to {destination_path}")
-                    shutil.copy2(source_path, destination_path)
-                else:
-                    logger.info(f"{destination_path} is up to date")
+                continue
             else:
                 logger.info(f"Copying {source_path} to {destination_path}")
                 shutil.copy2(source_path, destination_path)
@@ -64,6 +89,7 @@ def synchronize_folders(source_folder, destination_folder, logger):
                 os.mkdir(destination_subfolder)
             synchronize_folders(source_subfolder, destination_subfolder, logger)
 
+
 def main():
     parser = argparse.ArgumentParser(description="Synchronize two folders")
     parser.add_argument("source_folder", help="the path to the source folder")
@@ -73,13 +99,20 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S", handlers=[logging.FileHandler(args.log_file), logging.StreamHandler()])
+    log_handlers = [logging.FileHandler(args.log_file), logging.StreamHandler()]
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=log_handlers
+    )
 
     logger = logging.getLogger("sync_folders")
 
     stop_flag = False
 
-    def stop_handler(signal, frame):
+    def stop_handler():
         nonlocal stop_flag
         stop_flag = True
 
@@ -92,6 +125,7 @@ def main():
         time.sleep(args.interval)
 
     logger.info("Stopping folder synchronization")
+
 
 if __name__ == "__main__":
     main()
