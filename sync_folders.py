@@ -14,7 +14,13 @@ def delete_readonly_file(path):
     if platform.system() == "Windows":
         subprocess.call(["powershell.exe", f"Remove-Item -Path '{path}' -Force"])
     else:
-        os.remove(path)
+        try:
+            os.remove(path)
+        except OSError as e:
+            if e.errno == errno.EACCES:
+                subprocess.call(["sudo", "rm", "-f", path])
+            else:
+                raise e
 
 
 def get_file_hash(path):
