@@ -5,6 +5,15 @@ import os
 import shutil
 import signal
 import time
+import subprocess
+import platform
+
+
+def delete_readonly_file(path):
+    if platform.system() == "Windows":
+        subprocess.call(["powershell.exe", f"Remove-Item -Path '{path}' -Force"])
+    else:
+        os.remove(path)
 
 
 def get_file_hash(path):
@@ -43,7 +52,7 @@ def synchronize_folders(source_folder, destination_folder, logger):
             source_path = os.path.join(source_folder, entry.name)
             if not os.path.isfile(source_path):
                 logger.info(f"Deleting {destination_path}")
-                os.remove(destination_path)
+                delete_readonly_file(destination_path)
             else:
                 source_hash = get_file_hash(source_path)
                 dest_hash = get_file_hash(destination_path)
