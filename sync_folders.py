@@ -45,18 +45,9 @@ def synchronize_folders(source_folder, destination_folder, logger):
                 logger.info(f"Deleting {destination_path}")
                 os.remove(destination_path)
             else:
-                source_stat = os.stat(source_path)
-                dest_stat = os.stat(destination_path)
-                if (
-                    source_stat.st_mode != dest_stat.st_mode
-                    or source_stat.st_uid != dest_stat.st_uid
-                    or source_stat.st_gid != dest_stat.st_gid
-                    or source_stat.st_size != dest_stat.st_size
-                    or source_stat.st_atime != dest_stat.st_atime
-                    or source_stat.st_mtime != dest_stat.st_mtime
-                    or source_stat.st_ctime != dest_stat.st_ctime
-                    or source_stat.st_ino != dest_stat.st_ino
-                ):
+                source_hash = get_file_hash(source_path)
+                dest_hash = get_file_hash(destination_path)
+                if source_hash != dest_hash:
                     logger.info(f"Copying {source_path} to {destination_path}")
                     shutil.copy2(source_path, destination_path)
                 else:
