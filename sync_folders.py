@@ -122,7 +122,7 @@ def main():
 
     stop_flag = False
 
-    def stop_handler():
+    def stop_handler(signum, frame):
         nonlocal stop_flag
         stop_flag = True
 
