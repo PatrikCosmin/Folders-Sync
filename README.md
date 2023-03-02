@@ -8,8 +8,6 @@ Clone the repository or download the source code.
 
 Install Python 3.x if it is not already installed.
 
-Install the required dependencies by running <code> pip install -r requirements.txt </code>.
-
 **Instructions**
 
 To use the program, run it from the command line using the following syntax:
