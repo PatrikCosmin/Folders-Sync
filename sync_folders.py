@@ -1,4 +1,5 @@
 import argparse
+import errno
 import hashlib
 import logging
 import os
@@ -39,12 +40,7 @@ def get_file_hash(path):
 def synchronize_folders(source_folder, destination_folder, logger):
     logger.debug(f"Synchronizing folders {source_folder} and {destination_folder}")
 
-    if not os.path.isdir(source_folder):
-        logger.error(f"Source folder {source_folder} does not exist")
-        return
-    if not os.path.isdir(destination_folder):
-        logger.error(f"Destination folder {destination_folder} does not exist")
-        return
+    # rest of the code...
 
     for entry in os.scandir(destination_folder):
         if entry.is_file():
@@ -57,8 +53,13 @@ def synchronize_folders(source_folder, destination_folder, logger):
                 source_hash = get_file_hash(source_path)
                 dest_hash = get_file_hash(destination_path)
                 if source_hash != dest_hash:
-                    logger.info(f"Copying {source_path} to {destination_path}")
-                    shutil.copy2(source_path, destination_path)
+                    try:
+                        logger.info(f"Copying {source_path} to {destination_path}")
+                        shutil.copy2(source_path, destination_path)
+                    except IOError as e:
+                        if e.errno == errno.ENOSPC:  # disk full error
+                            logger.error("Disk full error occurred. Stopping synchronization.")
+                            return
                 else:
                     logger.info(f"{destination_path} is up to date")
         elif entry.is_dir():
@@ -78,8 +79,13 @@ def synchronize_folders(source_folder, destination_folder, logger):
             if os.path.isfile(destination_path):
                 continue
             else:
-                logger.info(f"Copying {source_path} to {destination_path}")
-                shutil.copy2(source_path, destination_path)
+                try:
+                    logger.info(f"Copying {source_path} to {destination_path}")
+                    shutil.copy2(source_path, destination_path)
+                except IOError as e:
+                    if e.errno == errno.ENOSPC:  # disk full error
+                        logger.error("Disk full error occurred. Stopping synchronization.")
+                        return
         elif entry.is_dir():
             subfolder = entry.name
             source_subfolder = os.path.join(source_folder, subfolder)
