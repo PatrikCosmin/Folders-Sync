@@ -46,8 +46,6 @@ def get_file_hash(path):
 def synchronize_folders(source_folder, destination_folder, logger):
     logger.debug(f"Synchronizing folders {source_folder} and {destination_folder}")
 
-    # rest of the code...
-
     for entry in os.scandir(destination_folder):
         if entry.is_file():
             destination_path = entry.path
