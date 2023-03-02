@@ -40,7 +40,9 @@ Logging of file creation, copying, removal operations to both console and log fi
 
 Content verification using hash comparison method to ensure file integrity.
 
-FIles are also synchronized when saving with no changes.
+Files are also synchronized when saving with no changes.
+
+Disk full error handling.
 
 **Limitations**
 
