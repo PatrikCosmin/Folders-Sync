@@ -6,11 +6,11 @@ import os
 import shutil
 import signal
 import time
-import subprocess
 import platform
+import subprocess
 
 
-def delete_readonly_file(path):
+def delete_readonly(path):
     if platform.system() == "Windows":
         subprocess.call(["powershell.exe", f"Remove-Item -Path '{path}' -Force"])
     else:
@@ -24,22 +24,12 @@ def delete_readonly_file(path):
 
 
 def get_file_hash(path):
-    file_size = os.stat(path).st_size
-    if file_size < 1024 * 1024:
-        buffer_size = 4096
-    elif file_size < 1024 * 1024 * 10:
-        buffer_size = 65536
-    elif file_size < 1024 * 1024 * 100:
-        buffer_size = 1024 * 1024
-    else:
-        buffer_size = 1024 * 1024 * 10
     hasher = hashlib.md5()
-    with open(path, "rb") as f:
-        while True:
-            data = f.read(buffer_size)
-            if not data:
-                break
-            hasher.update(data)
+    with open(path, 'rb') as file:
+        buffer = file.read(65536)
+        while buffer:
+            hasher.update(buffer)
+            buffer = file.read(65536)
     return hasher.hexdigest()
 
 
@@ -51,27 +41,35 @@ def synchronize_folders(source_folder, destination_folder, logger):
             destination_path = entry.path
             source_path = os.path.join(source_folder, entry.name)
             if not os.path.isfile(source_path):
-                logger.info(f"Deleting {destination_path}")
-                delete_readonly_file(destination_path)
+                logger.info(f"{entry.name} is missing in source folder. Deleting {destination_path}")
+                delete_readonly(destination_path)
             else:
-                source_hash = get_file_hash(source_path)
-                dest_hash = get_file_hash(destination_path)
-                if source_hash != dest_hash:
-                    try:
-                        logger.info(f"Copying {source_path} to {destination_path}")
-                        shutil.copy2(source_path, destination_path)
-                    except IOError as e:
-                        if e.errno == errno.ENOSPC:
-                            logger.error("Disk full error occurred. Stopping synchronization.")
-                            return
+                source_stat = os.stat(source_path)
+                dest_stat = os.stat(destination_path)
+                if source_stat.st_mtime > dest_stat.st_mtime:
+                    logger.info(f"{entry.name} has been modified. Updating {destination_path}")
+                    if platform.system() == "Windows":
+                        subprocess.call([
+                            "powershell.exe",
+                            f"Set-ItemProperty -Path '{destination_path}' -Name IsReadOnly -Value $false"
+                        ])
+                    shutil.copy2(source_path, destination_path)
+                elif source_stat.st_mode != dest_stat.st_mode:
+                    logger.info(f"{entry.name} permissions have changed. Updating {destination_path}")
+                    if platform.system() == "Windows":
+                        subprocess.call([
+                            "powershell.exe",
+                            f"Set-ItemProperty -Path '{destination_path}' -Name IsReadOnly -Value $false"
+                        ])
+                    shutil.copy2(source_path, destination_path)
                 else:
-                    logger.info(f"{destination_path} is up to date")
+                    logger.debug(f"{entry.name} is up to date")
         elif entry.is_dir():
             subfolder = entry.name
             source_subfolder = os.path.join(source_folder, subfolder)
             destination_subfolder = os.path.join(destination_folder, subfolder)
             if not os.path.isdir(source_subfolder):
-                logger.info(f"Deleting {destination_subfolder}")
+                logger.info(f"{subfolder} is missing in source folder. Deleting {destination_subfolder}")
                 shutil.rmtree(destination_subfolder)
             else:
                 synchronize_folders(source_subfolder, destination_subfolder, logger)
@@ -83,19 +81,14 @@ def synchronize_folders(source_folder, destination_folder, logger):
             if os.path.isfile(destination_path):
                 continue
             else:
-                try:
-                    logger.info(f"Copying {source_path} to {destination_path}")
-                    shutil.copy2(source_path, destination_path)
-                except IOError as e:
-                    if e.errno == errno.ENOSPC:
-                        logger.error("Disk full error occurred. Stopping synchronization.")
-                        return
+                logger.info(f"{entry.name} is new in source folder. Adding {destination_path}")
+                shutil.copy2(source_path, destination_path)
         elif entry.is_dir():
             subfolder = entry.name
             source_subfolder = os.path.join(source_folder, subfolder)
             destination_subfolder = os.path.join(destination_folder, subfolder)
             if not os.path.isdir(destination_subfolder):
-                logger.info(f"Creating directory {destination_subfolder}")
+                logger.info(f"{subfolder} is new in source folder. Creating {destination_subfolder}")
                 os.mkdir(destination_subfolder)
             synchronize_folders(source_subfolder, destination_subfolder, logger)
 
@@ -108,6 +101,13 @@ def main():
     parser.add_argument("-l", "--log-file", help="the path to the log file")
 
     args = parser.parse_args()
+
+    if not os.path.isdir(args.source_folder):
+        print(f"Error: {args.source_folder} is not a valid directory")
+        return
+    if not os.path.isdir(args.destination_folder):
+        print(f"Error: {args.destination_folder} is not a valid directory")
+        return
 
     log_handlers = [logging.FileHandler(args.log_file), logging.StreamHandler()]
 
