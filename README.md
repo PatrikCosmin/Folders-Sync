@@ -1,6 +1,6 @@
 **Folder Synchronization Program**
 
-The Folder Synchronization Program is a Python script that synchronizes two folders, keeping the files in both folders identical. It uses the MD5 hash algorithm to compare the contents of each file and copy only the files that have been modified or added since the last synchronization.
+This program synchronizes two folders by copying files from the source folder to the destination folder if they are new or have been modified since the last synchronization. It also deletes files from the destination folder if they do not exist in the source folder.
 
 **Installation**
 
@@ -28,29 +28,57 @@ To stop the program, press <code> Ctrl + C </code> while in terminal.
 
 **Features**
 
-Folder synchronization between two directories.
+Synchronizing two folders by copying new or modified files from the source folder to the destination folder, and deleting files from the destination folder that do not exist in the source folder.
 
-Folder content deletion if the source folder content is deleted.
+Logging information about the synchronization process to both the console and an optional log file.
 
-Periodic synchronization according to the specified time interval.
+Specifying the synchronization interval in seconds as a command-line argument (default is 10 seconds).
 
-Logging of file creation, copying, removal operations to both console and log file.
+Handling interruptions by the user (e.g., by pressing Ctrl+C) and logging a message indicating that synchronization has stopped.
 
-Content verification using hash comparison method to ensure file integrity.
+Using the md5 hash of each file to determine whether it has been modified since the last synchronization.
 
-Files are also synchronized when saving with no changes.
+Handling different file permissions and ownership on different platforms (Windows and Linux).
 
-Disk full error handling.
+Checking if the source and destination folders exist and are valid directories before synchronizing.
+
+Providing helpful error messages if the source or destination folders are not valid directories.
 
 **Limitations**
 
-The program is designed to synchronize files, not folders. If you move or rename a folder, it will be treated as a new folder and its contents will be copied to the destination folder.
+The program uses the md5 hash of each file to determine whether it has been modified since the last synchronization. This means that if the contents of a file are changed without changing its size or modification time, the program will not detect the change and will not copy the new contents to the destination folder. This can lead to data loss or inconsistency if the modified file is critical.
 
-The program uses the MD5 hash algorithm to compare the contents of each file, which may not be suitable for large files (e.g. > 100 GB) as it requires a lot of memory to calculate the hash. If performance issues may rise with large files, modify the program to use a different hash algorithm or split the file into smaller chunks and hash each chunk separately.
+The program does not handle conflicts that may arise when a file is modified in both the source and destination folders between synchronizations. In such cases, it may overwrite one of the modified files with the other, depending on the modification times.
+
+The program assumes that the source and destination folders have the same structure and naming conventions. If the folders have different structures or naming conventions, the program may fail to synchronize some files or subfolders.
+
+The program does not handle errors that may occur during file copying or deletion. For example, if a file is locked by another process or the user does not have sufficient permissions to copy or delete a file, the program will raise an exception and terminate.
+
+The program does not provide any progress indication during synchronization, which can be useful for large folders or slow network connections.
+
+The program does not handle files with Unicode characters or file paths longer than the maximum allowed by the operating system. This can lead to errors or unexpected behavior when copying or deleting such files.
+
+The program only supports Windows and Linux platforms. It may not work correctly or at all on other platforms.
 
 **Implementation**
 
-The program works by recursively scanning the source and destination folders for files and subdirectories. If a file exists in the source folder but not in the destination folder, it is copied over. If a file exists in both folders, its contents are compared using MD5 hash method to ensure that they are the same. If the contents are different, the file in the destination folder is replaced with the file from the source folder. If a file exists in the destination folder but not in the source folder, it is deleted. If a subdirectory exists in the source folder but not in the destination folder, it is created. If a subdirectory exists in both folders, the same synchronization process is applied recursively to the subdirectories.
+The program imports several Python modules, including argparse, errno, hashlib, logging, os, shutil, signal, time, platform, and subprocess.
+
+The program defines a function called delete_readonly that takes a file path as an argument. If the operating system is Windows, the function calls subprocess.call to run a PowerShell command that deletes the file even if it is read-only. Otherwise, the function tries to delete the file using os.remove. If os.remove raises an OSError with an error number of errno.EACCES (which indicates a permissions error), the function calls subprocess.call to run a sudo rm command that deletes the file as the superuser.
+
+The program defines a function called get_file_hash that takes a file path as an argument. The function uses the hashlib module to calculate the md5 hash of the file's contents and returns the hash as a hexadecimal string.
+
+The program defines a function called synchronize_folders that takes the paths of a source folder, a destination folder, and a logger object as arguments. The function first logs a message indicating that it is synchronizing the folders.
+
+The function then uses a for loop to iterate over each entry in the destination folder using os.scandir. For each file in the destination folder, the function checks if the corresponding file exists in the source folder. If the file does not exist in the source folder, the function logs a message indicating that the file is missing in the source folder and calls delete_readonly to delete the file from the destination folder. If the file exists in the source folder, the function compares the modification times and permissions of the source and destination files. If the source file has been modified more recently or has different permissions, the function logs a message indicating that the file has been modified or that its permissions have changed and copies the file from the source folder to the destination folder using shutil.copy2. If the file is up to date, the function logs a message indicating that the file is up to date.
+
+The function then uses another for loop to iterate over each entry in the source folder using os.scandir. For each file in the source folder, the function checks if the corresponding file exists in the destination folder. If the file does not exist in the destination folder, the function logs a message indicating that the file is new in the source folder and copies the file from the source folder to the destination folder using shutil.copy2.
+
+The function also handles subfolders recursively by using nested for loops to synchronize each subfolder in the source and destination folders.
+
+The main function uses argparse to parse command-line arguments, checks if the source and destination folders are valid directories, sets up logging to both the console and an optional log file, registers a signal handler to handle interruptions by the user, and runs a loop that repeatedly synchronizes the folders with a specified interval between synchronizations.
+
+Finally, the program checks if the __name__ variable is set to '__main__' (indicating that the program is being run as a script rather than imported as a module) and calls the main function if it is.
 
 This program should be able to work with any type of file, as it reads the files in binary mode and synchronizes them based on their binary content using the MD5 hash algorithm. Therefore, the program is file type-agnostic and should work with any file format.
 
